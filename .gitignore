@@ -1,0 +1,47 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+.factorypath
+.apt_generated/
+
+# Jenkins
+work/
+.jenkins/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.hpi
+*.jpi
+
+# Logs
+*.log
+
+# Local development scripts
+run_plugin.ps1
+run_clean.ps1
+run_plugin.bat
+verify_build.ps1

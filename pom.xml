@@ -7,18 +7,18 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.75</version>
+        <version>4.88</version>
         <relativePath/>
     </parent>
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>quay-tag-parameter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Quay Tag Parameter Plugin</name>
     <description>Jenkins plugin to fetch and select Docker images/tags from Quay.io repositories</description>
-    <url>https://github.com/jenkinsci/quay-tag-parameter</url>
+    <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
 
     <licenses>
         <license>
@@ -28,55 +28,31 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter.git</developerConnection>
-        <url>https://github.com/jenkinsci/quay-tag-parameter</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
+        <tag>${scmTag}</tag>
     </scm>
 
-    <developers>
-        <developer>
-            <id>mohitsalvi</id>
-            <name>Mohit Salvi</name>
-        </developer>
-    </developers>
-
     <properties>
-        <jenkins.version>2.387.3</jenkins.version>
-        <java.version>11</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <changelist>999999-SNAPSHOT</changelist>
+        <jenkins.baseline>2.479</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+        <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>
+        <hpi.compatibleSinceVersion>1.0.0</hpi.compatibleSinceVersion>
+        <spotless.check.skip>false</spotless.check.skip>
+        <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
+        <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.387.x</artifactId>
-                <version>2357.v1043f8578392</version>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>3435.v238d66a_043fb_</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <!-- Align Kotlin versions for OkHttp/OkIO -->
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-jdk8</artifactId>
-                <version>1.9.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-jdk7</artifactId>
-                <version>1.9.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib</artifactId>
-                <version>1.9.10</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-common</artifactId>
-                <version>1.9.10</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -112,25 +88,16 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- OkHttp for REST API calls -->
+        <!-- OkHttp API Plugin -->
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.12.0</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>okhttp-api</artifactId>
         </dependency>
 
-        <!-- Jackson for JSON parsing -->
+        <!-- Jackson API Plugin -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.3</version>
-        </dependency>
-
-        <!-- Guava for caching -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>32.1.3-jre</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jackson2-api</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
@@ -154,13 +121,4 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

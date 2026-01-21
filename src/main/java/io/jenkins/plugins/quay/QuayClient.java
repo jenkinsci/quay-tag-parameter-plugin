@@ -1,8 +1,7 @@
 package io.jenkins.plugins.quay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import hudson.util.Secret;
 import io.jenkins.plugins.quay.model.QuayTag;
 import io.jenkins.plugins.quay.model.QuayTagResponse;
 import okhttp3.OkHttpClient;
@@ -13,6 +12,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,22 +30,34 @@ public class QuayClient {
     private static final int DEFAULT_LIMIT = 20;
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 30;
+    private static final long CACHE_TTL_MS = TimeUnit.MINUTES.toMillis(5);
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String apiToken;
+    private final Secret apiToken;
 
-    // Cache with 5-minute TTL
-    private static final Cache<String, List<QuayTag>> tagCache = CacheBuilder.newBuilder()
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .maximumSize(100)
-            .build();
+    // Simple cache with TTL
+    private static final Map<String, CacheEntry> tagCache = new ConcurrentHashMap<>();
+
+    private static class CacheEntry {
+        final List<QuayTag> tags;
+        final long timestamp;
+
+        CacheEntry(List<QuayTag> tags) {
+            this.tags = tags;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > CACHE_TTL_MS;
+        }
+    }
 
     /**
      * Create a QuayClient for public repository access.
      */
     public QuayClient() {
-        this(null);
+        this((Secret) null);
     }
 
     /**
@@ -53,6 +66,15 @@ public class QuayClient {
      * @param apiToken Quay.io API token (robot token) for private repos, or null for public repos
      */
     public QuayClient(String apiToken) {
+        this(apiToken != null && !apiToken.trim().isEmpty() ? Secret.fromString(apiToken) : null);
+    }
+
+    /**
+     * Create a QuayClient with optional authentication token as Secret.
+     *
+     * @param apiToken Quay.io API token as Secret for private repos, or null for public repos
+     */
+    public QuayClient(Secret apiToken) {
         this.apiToken = apiToken;
         this.objectMapper = new ObjectMapper();
         this.httpClient = new OkHttpClient.Builder()
@@ -89,17 +111,22 @@ public class QuayClient {
         String cacheKey = buildCacheKey(organization, repository, limit);
 
         // Check cache first
-        List<QuayTag> cachedTags = tagCache.getIfPresent(cacheKey);
-        if (cachedTags != null) {
+        CacheEntry cached = tagCache.get(cacheKey);
+        if (cached != null && !cached.isExpired()) {
             LOGGER.fine("Returning cached tags for " + organization + "/" + repository);
-            return new ArrayList<>(cachedTags);
+            return new ArrayList<>(cached.tags);
+        }
+
+        // Remove expired entry
+        if (cached != null) {
+            tagCache.remove(cacheKey);
         }
 
         // Fetch from API
         List<QuayTag> tags = fetchTagsFromApi(organization, repository, limit);
 
         // Cache the result
-        tagCache.put(cacheKey, new ArrayList<>(tags));
+        tagCache.put(cacheKey, new CacheEntry(new ArrayList<>(tags)));
 
         return tags;
     }
@@ -133,7 +160,7 @@ public class QuayClient {
      * Clear the tag cache. Useful for testing or forcing refresh.
      */
     public static void clearCache() {
-        tagCache.invalidateAll();
+        tagCache.clear();
     }
 
     /**
@@ -186,8 +213,11 @@ public class QuayClient {
     }
 
     private void addAuthHeader(Request.Builder requestBuilder) {
-        if (apiToken != null && !apiToken.trim().isEmpty()) {
-            requestBuilder.header("Authorization", "Bearer " + apiToken);
+        if (apiToken != null) {
+            String token = apiToken.getPlainText();
+            if (token != null && !token.trim().isEmpty()) {
+                requestBuilder.header("Authorization", "Bearer " + token);
+            }
         }
     }
 
@@ -223,14 +253,14 @@ public class QuayClient {
             throw new QuayApiException(fieldName + " cannot be empty");
         }
         // Basic validation - no special characters that could cause issues
-        if (!value.matches("^[a-zA-Z0-9._-]+$")) {
+        if (!value.matches("^[a-zA-Z0-9._/-]+$")) {
             throw new QuayApiException(fieldName + " contains invalid characters. " +
-                    "Only alphanumeric characters, dots, underscores, and hyphens are allowed.");
+                    "Only alphanumeric characters, dots, underscores, slashes, and hyphens are allowed.");
         }
     }
 
     private String buildCacheKey(String organization, String repository, int limit) {
-        String tokenHash = apiToken != null ? String.valueOf(apiToken.hashCode()) : "public";
+        String tokenHash = apiToken != null ? String.valueOf(apiToken.getEncryptedValue().hashCode()) : "public";
         return String.format("%s/%s:%d:%s", organization, repository, limit, tokenHash);
     }
 

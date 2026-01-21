@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+    <div>
+        <p>
+            This parameter allows you to select a Docker image tag from a Quay.io repository.
+            The selected tag will be available as an environment variable during the build.
+        </p>
+        <p>
+            <strong>Environment Variables:</strong>
+        </p>
+        <ul>
+            <li><code>${PARAM_NAME}</code> - Full image reference (e.g., quay.io/org/repo:tag)</li>
+            <li><code>${PARAM_NAME}_ORG</code> - Organization name</li>
+            <li><code>${PARAM_NAME}_REPO</code> - Repository name</li>
+            <li><code>${PARAM_NAME}_TAG</code> - Selected tag</li>
+            <li><code>${PARAM_NAME}_FULL_REPO</code> - Full repository path (e.g., quay.io/org/repo)</li>
+        </ul>
+        <p>
+            For private repositories, create a Quay.io robot account and add the token
+            as a "Secret text" credential in Jenkins.
+        </p>
+    </div>
+</j:jelly>

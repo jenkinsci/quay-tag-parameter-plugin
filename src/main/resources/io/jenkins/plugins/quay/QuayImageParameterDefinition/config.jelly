@@ -1,0 +1,37 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+    <f:entry title="${%Name}" field="name">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%Description}" field="description">
+        <f:textarea/>
+    </f:entry>
+
+    <f:entry title="${%Organization}" field="organization">
+        <f:textbox clazz="required" checkMethod="post"/>
+    </f:entry>
+
+    <f:entry title="${%Repository}" field="repository">
+        <f:textbox clazz="required" checkMethod="post"/>
+    </f:entry>
+
+    <f:entry title="${%Credentials}" field="credentialsId">
+        <c:select/>
+    </f:entry>
+
+    <f:entry title="${%Tag Limit}" field="tagLimit">
+        <f:number default="20" min="1" max="100"/>
+    </f:entry>
+
+    <f:entry title="${%Default Tag}" field="defaultTag">
+        <f:textbox default="latest"/>
+    </f:entry>
+
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}"
+                      method="testConnection"
+                      with="organization,repository,credentialsId"/>
+
+</j:jelly>

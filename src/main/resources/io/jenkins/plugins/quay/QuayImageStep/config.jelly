@@ -1,0 +1,29 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+    <f:entry title="${%Organization}" field="organization">
+        <f:textbox clazz="required"/>
+    </f:entry>
+
+    <f:entry title="${%Repository}" field="repository">
+        <f:textbox clazz="required"/>
+    </f:entry>
+
+    <f:entry title="${%Credentials}" field="credentialsId">
+        <c:select/>
+    </f:entry>
+
+    <f:entry title="${%Tag}" field="tag">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%List Tags}" field="listTags">
+        <f:checkbox/>
+    </f:entry>
+
+    <f:entry title="${%Tag Limit}" field="tagLimit">
+        <f:number default="20"/>
+    </f:entry>
+
+</j:jelly>

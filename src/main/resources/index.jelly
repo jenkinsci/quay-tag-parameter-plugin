@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Quay Tag Parameter plugin for Jenkins. Provides a build parameter type that
+    displays a dropdown of available image tags from a specified Quay.io repository,
+    making it easy to select which container image version to use in your builds.
+</div>

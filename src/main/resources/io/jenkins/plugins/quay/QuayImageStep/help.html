@@ -1,0 +1,48 @@
+<div>
+    <p>
+        Pipeline step to fetch image references from Quay.io repositories.
+    </p>
+
+    <h3>Get Latest Image Reference</h3>
+    <pre>
+def imageRef = quayImage(
+    organization: 'my-org',
+    repository: 'my-repo',
+    credentialsId: 'quay-token'
+)
+echo "Image: ${imageRef}"
+// Output: quay.io/my-org/my-repo:latest-tag
+    </pre>
+
+    <h3>Get Specific Tag</h3>
+    <pre>
+def imageRef = quayImage(
+    organization: 'my-org',
+    repository: 'my-repo',
+    tag: 'v1.0.0'
+)
+    </pre>
+
+    <h3>List Available Tags</h3>
+    <pre>
+def tags = quayImage(
+    organization: 'my-org',
+    repository: 'my-repo',
+    listTags: true,
+    tagLimit: 10
+)
+tags.each { tag ->
+    echo "Tag: ${tag}"
+}
+    </pre>
+
+    <h3>Parameters</h3>
+    <ul>
+        <li><code>organization</code> (required) - Quay.io organization/namespace</li>
+        <li><code>repository</code> (required) - Repository name</li>
+        <li><code>credentialsId</code> (optional) - Jenkins credential ID for private repos</li>
+        <li><code>tag</code> (optional) - Specific tag to use (defaults to most recent)</li>
+        <li><code>listTags</code> (optional) - Return array of tag names instead of image reference</li>
+        <li><code>tagLimit</code> (optional) - Max tags to fetch when listTags=true (default: 20)</li>
+    </ul>
+</div>

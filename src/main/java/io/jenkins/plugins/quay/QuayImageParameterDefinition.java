@@ -19,7 +19,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -89,7 +89,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
     }
 
     @Override
-    public ParameterValue createValue(StaplerRequest req, JSONObject jo) {
+    public ParameterValue createValue(StaplerRequest2 req, JSONObject jo) {
         String tag = null;
 
         // Try to get value from various possible keys
@@ -110,7 +110,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
     }
 
     @Override
-    public ParameterValue createValue(StaplerRequest req) {
+    public ParameterValue createValue(StaplerRequest2 req) {
         String[] tagValues = req.getParameterValues(getName());
         String[] valueParams = req.getParameterValues("value");
 
@@ -154,7 +154,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 CredentialsProvider.lookupCredentials(
                         StringCredentials.class,
                         Jenkins.get(),
-                        ACL.SYSTEM,
+                        ACL.SYSTEM2,
                         Collections.emptyList()
                 ),
                 CredentialsMatchers.withId(credentialsId)
@@ -193,7 +193,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
             }
 
             model.includeEmptyValue();
-            model.includeAs(ACL.SYSTEM, item, StringCredentials.class);
+            model.includeAs(ACL.SYSTEM2, item, StringCredentials.class);
             return model.includeCurrentValue(credentialsId);
         }
 
@@ -226,7 +226,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                             CredentialsProvider.lookupCredentials(
                                     StringCredentials.class,
                                     item,
-                                    ACL.SYSTEM,
+                                    ACL.SYSTEM2,
                                     Collections.emptyList()
                             ),
                             CredentialsMatchers.withId(credentialsId)
@@ -315,7 +315,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                             CredentialsProvider.lookupCredentials(
                                     StringCredentials.class,
                                     item,
-                                    ACL.SYSTEM,
+                                    ACL.SYSTEM2,
                                     Collections.emptyList()
                             ),
                             CredentialsMatchers.withId(credentialsId)

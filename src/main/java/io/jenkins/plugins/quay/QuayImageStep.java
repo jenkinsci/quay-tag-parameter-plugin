@@ -2,14 +2,16 @@ package io.jenkins.plugins.quay;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.google.common.collect.ImmutableSet;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.util.ListBoxModel;
 import io.jenkins.plugins.quay.model.QuayTag;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -20,6 +22,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -177,7 +180,7 @@ public class QuayImageStep extends Step {
                     CredentialsProvider.lookupCredentials(
                             StringCredentials.class,
                             item,
-                            ACL.SYSTEM,
+                            ACL.SYSTEM2,
                             Collections.emptyList()
                     ),
                     CredentialsMatchers.withId(credentialsId)
@@ -208,12 +211,36 @@ public class QuayImageStep extends Step {
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
-            return ImmutableSet.of(Run.class, TaskListener.class);
+            return Set.of(Run.class, TaskListener.class);
         }
 
         @Override
         public boolean takesImplicitBlockArgument() {
             return false;
+        }
+
+        /**
+         * Populate credentials dropdown for snippet generator.
+         */
+        @POST
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item,
+                                                      @QueryParameter String credentialsId) {
+            StandardListBoxModel model = new StandardListBoxModel();
+
+            if (item == null) {
+                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+                    return model.includeCurrentValue(credentialsId);
+                }
+            } else {
+                if (!item.hasPermission(Item.EXTENDED_READ) &&
+                    !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                    return model.includeCurrentValue(credentialsId);
+                }
+            }
+
+            model.includeEmptyValue();
+            model.includeAs(ACL.SYSTEM2, item, StringCredentials.class);
+            return model.includeCurrentValue(credentialsId);
         }
     }
 }

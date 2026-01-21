@@ -1,54 +1,21 @@
-# Quay.io Image Plugin for Jenkins
+# Quay Tag Parameter Plugin
 
 A Jenkins plugin that integrates with Quay.io to fetch and select Docker image tags from Quay repositories. Supports both Freestyle jobs (via build parameters) and Pipeline jobs (via the `quayImage` step).
 
 ## Features
 
-- **Build Parameter**: `QuayImageParameter` - Dropdown selection of Quay.io image tags
-- **Pipeline Step**: `quayImage()` - Fetch image references in Jenkinsfiles
+- **Build Parameter**: Dropdown selection of Quay.io image tags in job configuration
+- **Pipeline Step**: `quayImage()` step for fetching image references in Jenkinsfiles
 - **Public & Private Repos**: Support for both public repositories and private repos via robot tokens
-- **Dynamic Tag Fetching**: AJAX-powered tag dropdown with real-time updates
+- **Dynamic Tag Fetching**: Real-time tag updates via AJAX
 - **Caching**: 5-minute cache for API responses to reduce load
-- **Secure**: Uses Jenkins Credentials API, never exposes tokens in logs
-
-## Requirements
-
-- Jenkins LTS 2.387.3 or newer
-- Java 11 or newer
-- Credentials Plugin (bundled with Jenkins)
-- Plain Credentials Plugin (bundled with Jenkins)
-
-## Installation
-
-### From Source
-
-```bash
-# Clone or download the plugin source
-cd quay-image-plugin
-
-# Build the plugin
-mvn clean package
-
-# The .hpi file will be at: target/quay-image-plugin.hpi
-```
-
-### Install in Jenkins
-
-1. Go to **Manage Jenkins → Plugins → Advanced settings**
-2. Under **Deploy Plugin**, upload `quay-image-plugin.hpi`
-3. Restart Jenkins
-
-Or copy directly:
-```bash
-cp target/quay-image-plugin.hpi $JENKINS_HOME/plugins/
-# Restart Jenkins
-```
+- **Secure**: Uses Jenkins Credentials API, tokens are never exposed in logs
 
 ## Configuration
 
 ### Setting Up Credentials (for Private Repos)
 
-1. Go to **Manage Jenkins → Credentials**
+1. Go to **Manage Jenkins > Credentials**
 2. Add a new credential:
    - **Kind**: Secret text
    - **Secret**: Your Quay.io robot token
@@ -58,7 +25,7 @@ cp target/quay-image-plugin.hpi $JENKINS_HOME/plugins/
 #### Getting a Robot Token from Quay.io
 
 1. Log in to [quay.io](https://quay.io)
-2. Go to your organization → **Robot Accounts**
+2. Go to your organization > **Robot Accounts**
 3. Create a new robot account
 4. Grant read access to your repository
 5. Copy the robot token
@@ -69,7 +36,7 @@ cp target/quay-image-plugin.hpi $JENKINS_HOME/plugins/
 
 1. Create or configure a Freestyle job
 2. Check **This project is parameterized**
-3. Add parameter → **Quay.io Image Parameter**
+3. Add parameter > **Quay.io Image Parameter**
 4. Configure:
    - **Name**: `QUAY_IMAGE` (or any name)
    - **Organization**: Your Quay.io org (e.g., `mycompany`)
@@ -217,53 +184,8 @@ pipeline {
 - Quay.io has API rate limits
 
 ### Tags not updating
-- Tags are cached for 5 minutes
-- Wait for cache to expire or restart Jenkins
-
-## Development
-
-### Build
-
-```bash
-mvn clean package
-```
-
-### Run Local Jenkins with Plugin
-
-```bash
-mvn hpi:run
-```
-
-Then open http://localhost:8080/jenkins/
-
-### Run Tests
-
-```bash
-mvn test
-```
-
-## Architecture
-
-```
-src/main/java/io/jenkins/plugins/quay/
-├── QuayClient.java              # Quay.io API client with caching
-├── QuayImageParameterDefinition.java  # Build parameter definition
-├── QuayImageParameterValue.java       # Parameter value container
-├── QuayImageStep.java                 # Pipeline step
-└── model/
-    ├── QuayTag.java             # Tag model
-    └── QuayTagResponse.java     # API response model
-
-src/main/resources/io/jenkins/plugins/quay/
-├── QuayImageParameterDefinition/
-│   ├── config.jelly             # Parameter configuration UI
-│   ├── index.jelly              # Build-time parameter UI
-│   ├── help.jelly               # General help
-│   └── help-*.html              # Field-specific help
-└── QuayImageStep/
-    ├── config.jelly             # Pipeline snippet generator UI
-    └── help.html                # Step documentation
-```
+- Tags are cached for 5 minutes to reduce API calls
+- Use the **Test Connection** button to fetch fresh data
 
 ## Security
 
@@ -272,18 +194,10 @@ src/main/resources/io/jenkins/plugins/quay/
 - All API calls use HTTPS
 - Input validation prevents injection attacks
 
-## License
-
-MIT License - see LICENSE file for details.
-
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `mvn test`
-5. Submit a pull request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-## Support
+## License
 
-For issues and feature requests, please use the GitHub issue tracker.
+MIT License - see [LICENSE](LICENSE) file for details.

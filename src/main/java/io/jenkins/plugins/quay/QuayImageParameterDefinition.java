@@ -3,6 +3,7 @@ package io.jenkins.plugins.quay;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ParameterDefinition;
@@ -11,6 +12,10 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.quay.model.QuayTag;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
@@ -21,14 +26,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Build parameter definition for selecting Quay.io image tags.
@@ -151,14 +148,9 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
         }
 
         StringCredentials credentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
-                        StringCredentials.class,
-                        Jenkins.get(),
-                        ACL.SYSTEM2,
-                        Collections.emptyList()
-                ),
-                CredentialsMatchers.withId(credentialsId)
-        );
+                CredentialsProvider.lookupCredentialsInItemGroup(
+                        StringCredentials.class, Jenkins.get(), ACL.SYSTEM2, Collections.emptyList()),
+                CredentialsMatchers.withId(credentialsId));
 
         return credentials != null ? credentials.getSecret().getPlainText() : null;
     }
@@ -177,8 +169,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
          * Populate credentials dropdown.
          */
         @POST
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item,
-                                                      @QueryParameter String credentialsId) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String credentialsId) {
             StandardListBoxModel model = new StandardListBoxModel();
 
             if (item == null) {
@@ -186,8 +177,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                     return model.includeCurrentValue(credentialsId);
                 }
             } else {
-                if (!item.hasPermission(Item.EXTENDED_READ) &&
-                    !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
                     return model.includeCurrentValue(credentialsId);
                 }
             }
@@ -201,11 +191,12 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
          * Dynamically fetch tags for the UI dropdown via AJAX.
          */
         @POST
-        public ListBoxModel doFillTagItems(@AncestorInPath Item item,
-                                            @QueryParameter String organization,
-                                            @QueryParameter String repository,
-                                            @QueryParameter String credentialsId,
-                                            @QueryParameter int tagLimit) {
+        public ListBoxModel doFillTagItems(
+                @AncestorInPath Item item,
+                @QueryParameter String organization,
+                @QueryParameter String repository,
+                @QueryParameter String credentialsId,
+                @QueryParameter int tagLimit) {
             ListBoxModel model = new ListBoxModel();
 
             // Check permissions
@@ -213,8 +204,10 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 return model;
             }
 
-            if (organization == null || organization.trim().isEmpty() ||
-                repository == null || repository.trim().isEmpty()) {
+            if (organization == null
+                    || organization.trim().isEmpty()
+                    || repository == null
+                    || repository.trim().isEmpty()) {
                 model.add("-- Enter organization and repository --", "");
                 return model;
             }
@@ -223,14 +216,9 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 String token = null;
                 if (credentialsId != null && !credentialsId.trim().isEmpty()) {
                     StringCredentials credentials = CredentialsMatchers.firstOrNull(
-                            CredentialsProvider.lookupCredentials(
-                                    StringCredentials.class,
-                                    item,
-                                    ACL.SYSTEM2,
-                                    Collections.emptyList()
-                            ),
-                            CredentialsMatchers.withId(credentialsId)
-                    );
+                            CredentialsProvider.lookupCredentialsInItem(
+                                    StringCredentials.class, item, ACL.SYSTEM2, Collections.emptyList()),
+                            CredentialsMatchers.withId(credentialsId));
                     if (credentials != null) {
                         token = credentials.getSecret().getPlainText();
                     }
@@ -291,10 +279,11 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
          * Test connection to Quay.io repository.
          */
         @POST
-        public FormValidation doTestConnection(@AncestorInPath Item item,
-                                                @QueryParameter String organization,
-                                                @QueryParameter String repository,
-                                                @QueryParameter String credentialsId) {
+        public FormValidation doTestConnection(
+                @AncestorInPath Item item,
+                @QueryParameter String organization,
+                @QueryParameter String repository,
+                @QueryParameter String credentialsId) {
             if (item != null) {
                 item.checkPermission(Item.CONFIGURE);
             } else {
@@ -312,14 +301,9 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 String token = null;
                 if (credentialsId != null && !credentialsId.trim().isEmpty()) {
                     StringCredentials credentials = CredentialsMatchers.firstOrNull(
-                            CredentialsProvider.lookupCredentials(
-                                    StringCredentials.class,
-                                    item,
-                                    ACL.SYSTEM2,
-                                    Collections.emptyList()
-                            ),
-                            CredentialsMatchers.withId(credentialsId)
-                    );
+                            CredentialsProvider.lookupCredentialsInItem(
+                                    StringCredentials.class, item, ACL.SYSTEM2, Collections.emptyList()),
+                            CredentialsMatchers.withId(credentialsId));
                     if (credentials != null) {
                         token = credentials.getSecret().getPlainText();
                     }

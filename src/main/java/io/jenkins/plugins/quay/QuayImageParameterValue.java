@@ -5,9 +5,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
 import hudson.util.VariableResolver;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.util.Objects;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Represents the value of a QuayImageParameter.
@@ -101,9 +100,9 @@ public class QuayImageParameterValue extends ParameterValue {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         QuayImageParameterValue that = (QuayImageParameterValue) o;
-        return Objects.equals(organization, that.organization) &&
-               Objects.equals(repository, that.repository) &&
-               Objects.equals(tag, that.tag);
+        return Objects.equals(organization, that.organization)
+                && Objects.equals(repository, that.repository)
+                && Objects.equals(tag, that.tag);
     }
 
     @Override
@@ -113,11 +112,10 @@ public class QuayImageParameterValue extends ParameterValue {
 
     @Override
     public String toString() {
-        return "QuayImageParameterValue{" +
-               "name='" + getName() + '\'' +
-               ", organization='" + organization + '\'' +
-               ", repository='" + repository + '\'' +
-               ", tag='" + tag + '\'' +
-               '}';
+        return "QuayImageParameterValue{" + "name='"
+                + getName() + '\'' + ", organization='"
+                + organization + '\'' + ", repository='"
+                + repository + '\'' + ", tag='"
+                + tag + '\'' + '}';
     }
 }

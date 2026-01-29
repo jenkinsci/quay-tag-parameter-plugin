@@ -4,10 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.util.Secret;
 import io.jenkins.plugins.quay.model.QuayTag;
 import io.jenkins.plugins.quay.model.QuayTagResponse;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Client for interacting with Quay.io REST API v1.
@@ -141,9 +140,7 @@ public class QuayClient {
     public boolean validateRepository(String organization, String repository) {
         try {
             String url = String.format("%s/repository/%s/%s", QUAY_API_BASE, organization, repository);
-            Request.Builder requestBuilder = new Request.Builder()
-                    .url(url)
-                    .get();
+            Request.Builder requestBuilder = new Request.Builder().url(url).get();
 
             addAuthHeader(requestBuilder);
 
@@ -176,15 +173,13 @@ public class QuayClient {
     }
 
     private List<QuayTag> fetchTagsFromApi(String organization, String repository, int limit) throws QuayApiException {
-        String url = String.format("%s/repository/%s/%s/tag/?limit=%d&onlyActiveTags=true",
+        String url = String.format(
+                "%s/repository/%s/%s/tag/?limit=%d&onlyActiveTags=true",
                 QUAY_API_BASE, organization, repository, limit);
 
         LOGGER.fine("Fetching tags from: " + url);
 
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(url)
-                .get()
-                .header("Accept", "application/json");
+        Request.Builder requestBuilder = new Request.Builder().url(url).get().header("Accept", "application/json");
 
         addAuthHeader(requestBuilder);
 
@@ -193,7 +188,8 @@ public class QuayClient {
                 handleErrorResponse(response, organization, repository);
             }
 
-            String responseBody = response.body() != null ? response.body().string() : "";
+            okhttp3.ResponseBody body = response.body();
+            String responseBody = body != null ? body.string() : "";
             QuayTagResponse tagResponse = objectMapper.readValue(responseBody, QuayTagResponse.class);
 
             List<QuayTag> tags = tagResponse.getTags();
@@ -221,7 +217,8 @@ public class QuayClient {
         }
     }
 
-    private void handleErrorResponse(Response response, String organization, String repository) throws QuayApiException {
+    private void handleErrorResponse(Response response, String organization, String repository)
+            throws QuayApiException {
         int code = response.code();
         String message;
 
@@ -230,12 +227,12 @@ public class QuayClient {
                 message = "Authentication failed. Please check your Quay.io credentials.";
                 break;
             case 403:
-                message = "Access denied to repository " + organization + "/" + repository +
-                          ". Ensure you have permission and valid credentials.";
+                message = "Access denied to repository " + organization + "/" + repository
+                        + ". Ensure you have permission and valid credentials.";
                 break;
             case 404:
-                message = "Repository " + organization + "/" + repository + " not found. " +
-                          "Please verify the organization and repository names.";
+                message = "Repository " + organization + "/" + repository + " not found. "
+                        + "Please verify the organization and repository names.";
                 break;
             case 429:
                 message = "Rate limit exceeded. Please try again later.";
@@ -254,13 +251,14 @@ public class QuayClient {
         }
         // Basic validation - no special characters that could cause issues
         if (!value.matches("^[a-zA-Z0-9._/-]+$")) {
-            throw new QuayApiException(fieldName + " contains invalid characters. " +
-                    "Only alphanumeric characters, dots, underscores, slashes, and hyphens are allowed.");
+            throw new QuayApiException(fieldName + " contains invalid characters. "
+                    + "Only alphanumeric characters, dots, underscores, slashes, and hyphens are allowed.");
         }
     }
 
     private String buildCacheKey(String organization, String repository, int limit) {
-        String tokenHash = apiToken != null ? String.valueOf(apiToken.getEncryptedValue().hashCode()) : "public";
+        String tokenHash =
+                apiToken != null ? String.valueOf(apiToken.getEncryptedValue().hashCode()) : "public";
         return String.format("%s/%s:%d:%s", organization, repository, limit, tokenHash);
     }
 

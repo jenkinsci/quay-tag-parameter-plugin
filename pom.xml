@@ -1,124 +1,122 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>6.2116.v7501b_67dc517</version>
-        <relativePath/>
-    </parent>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>6.2116.v7501b_67dc517</version>
+    <relativePath />
+  </parent>
 
-    <groupId>io.jenkins.plugins</groupId>
-    <artifactId>quay-tag-parameter</artifactId>
-    <version>${changelist}</version>
-    <packaging>hpi</packaging>
+  <groupId>io.jenkins.plugins</groupId>
+  <artifactId>quay-tag-parameter</artifactId>
+  <version>${changelist}</version>
+  <packaging>hpi</packaging>
 
-    <name>Quay Tag Parameter Plugin</name>
-    <description>Jenkins plugin to fetch and select Docker images/tags from Quay.io repositories</description>
+  <name>Quay Tag Parameter Plugin</name>
+  <description>Jenkins plugin to fetch and select Docker images/tags from Quay.io repositories</description>
+  <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
+    <tag>${scmTag}</tag>
     <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
+  </scm>
 
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>https://opensource.org/licenses/MIT</url>
-        </license>
-    </licenses>
+  <properties>
+    <changelist>999999-SNAPSHOT</changelist>
+    <jenkins.baseline>2.528</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+    <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>
+    <hpi.compatibleSinceVersion>1.0.0</hpi.compatibleSinceVersion>
+    <spotless.check.skip>false</spotless.check.skip>
+    <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
+    <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
+  </properties>
 
-    <scm>
-        <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
-        <tag>${scmTag}</tag>
-    </scm>
-
-    <properties>
-        <changelist>999999-SNAPSHOT</changelist>
-        <jenkins.baseline>2.528</jenkins.baseline>
-        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>
-        <hpi.compatibleSinceVersion>1.0.0</hpi.compatibleSinceVersion>
-        <spotless.check.skip>false</spotless.check.skip>
-        <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
-        <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>5983.v443959746f1f</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
+  <dependencyManagement>
     <dependencies>
-        <!-- Jenkins Credentials Plugin -->
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>credentials</artifactId>
-        </dependency>
-
-        <!-- Plain Credentials for Secret Text -->
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>plain-credentials</artifactId>
-        </dependency>
-
-        <!-- Jenkins Pipeline Support -->
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-job</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- OkHttp API Plugin -->
-        <dependency>
-            <groupId>io.jenkins.plugins</groupId>
-            <artifactId>okhttp-api</artifactId>
-        </dependency>
-
-        <!-- Jackson API Plugin -->
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jackson2-api</artifactId>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
+        <version>5983.v443959746f1f</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
+  </dependencyManagement>
 
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>https://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
+  <dependencies>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>https://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
+    <!-- OkHttp API Plugin -->
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>okhttp-api</artifactId>
+    </dependency>
+    <!-- Jenkins Credentials Plugin -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>credentials</artifactId>
+    </dependency>
+
+    <!-- Jackson API Plugin -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>jackson2-api</artifactId>
+    </dependency>
+
+    <!-- Plain Credentials for Secret Text -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>plain-credentials</artifactId>
+    </dependency>
+
+    <!-- Jenkins Pipeline Support -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-cps</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-job</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>

@@ -1,12 +1,12 @@
 package io.jenkins.plugins.quay;
 
+import static org.junit.Assert.*;
+
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import static org.junit.Assert.*;
 
 /**
  * Integration tests for QuayImageParameterDefinition.
@@ -19,12 +19,8 @@ public class QuayImageParameterDefinitionTest {
 
     @Test
     public void testParameterDefinitionCreation() throws Exception {
-        QuayImageParameterDefinition param = new QuayImageParameterDefinition(
-                "QUAY_IMAGE",
-                "Select an image",
-                "coreos",
-                "etcd"
-        );
+        QuayImageParameterDefinition param =
+                new QuayImageParameterDefinition("QUAY_IMAGE", "Select an image", "coreos", "etcd");
 
         assertEquals("QUAY_IMAGE", param.getName());
         assertEquals("Select an image", param.getDescription());
@@ -34,12 +30,8 @@ public class QuayImageParameterDefinitionTest {
 
     @Test
     public void testDefaultParameterValue() throws Exception {
-        QuayImageParameterDefinition param = new QuayImageParameterDefinition(
-                "QUAY_IMAGE",
-                "Select an image",
-                "coreos",
-                "etcd"
-        );
+        QuayImageParameterDefinition param =
+                new QuayImageParameterDefinition("QUAY_IMAGE", "Select an image", "coreos", "etcd");
         param.setDefaultTag("v3.5.0");
 
         QuayImageParameterValue value = (QuayImageParameterValue) param.getDefaultParameterValue();
@@ -53,12 +45,7 @@ public class QuayImageParameterDefinitionTest {
 
     @Test
     public void testParameterValueEnvironmentVariables() throws Exception {
-        QuayImageParameterValue value = new QuayImageParameterValue(
-                "MY_IMAGE",
-                "myorg",
-                "myrepo",
-                "v1.0.0"
-        );
+        QuayImageParameterValue value = new QuayImageParameterValue("MY_IMAGE", "myorg", "myrepo", "v1.0.0");
 
         assertEquals("quay.io/myorg/myrepo:v1.0.0", value.getValue());
         assertEquals("MY_IMAGE=quay.io/myorg/myrepo:v1.0.0", value.getShortDescription());
@@ -68,12 +55,8 @@ public class QuayImageParameterDefinitionTest {
     public void testAddParameterToJob() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject("test-job");
 
-        QuayImageParameterDefinition param = new QuayImageParameterDefinition(
-                "DEPLOY_IMAGE",
-                "Image to deploy",
-                "mycompany",
-                "myapp"
-        );
+        QuayImageParameterDefinition param =
+                new QuayImageParameterDefinition("DEPLOY_IMAGE", "Image to deploy", "mycompany", "myapp");
         param.setTagLimit(10);
         param.setDefaultTag("latest");
 
@@ -94,8 +77,7 @@ public class QuayImageParameterDefinitionTest {
 
     @Test
     public void testDescriptorDisplayName() {
-        QuayImageParameterDefinition.DescriptorImpl descriptor =
-                new QuayImageParameterDefinition.DescriptorImpl();
+        QuayImageParameterDefinition.DescriptorImpl descriptor = new QuayImageParameterDefinition.DescriptorImpl();
         assertEquals("Quay.io Image Parameter", descriptor.getDisplayName());
     }
 }

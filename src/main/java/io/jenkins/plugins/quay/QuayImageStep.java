@@ -3,6 +3,7 @@ package io.jenkins.plugins.quay;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.model.Item;
@@ -11,6 +12,11 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.quay.model.QuayTag;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -23,14 +29,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Pipeline step for fetching Quay.io image tags.
@@ -140,8 +138,9 @@ public class QuayImageStep extends Step {
                 if (step.listTags) {
                     // Return list of tag names
                     List<QuayTag> tags = client.getTags(step.organization, step.repository, step.tagLimit);
-                    listener.getLogger().println("[Quay.io] Found " + tags.size() + " tags for " +
-                            step.organization + "/" + step.repository);
+                    listener.getLogger()
+                            .println("[Quay.io] Found " + tags.size() + " tags for " + step.organization + "/"
+                                    + step.repository);
                     return tags.stream().map(QuayTag::getName).toArray(String[]::new);
                 } else {
                     // Return single image reference
@@ -151,15 +150,14 @@ public class QuayImageStep extends Step {
                         // Get the most recent tag
                         List<QuayTag> tags = client.getTags(step.organization, step.repository, 1);
                         if (tags.isEmpty()) {
-                            throw new AbortException("No tags found in repository " +
-                                    step.organization + "/" + step.repository);
+                            throw new AbortException(
+                                    "No tags found in repository " + step.organization + "/" + step.repository);
                         }
                         selectedTag = tags.get(0).getName();
                         listener.getLogger().println("[Quay.io] Using most recent tag: " + selectedTag);
                     }
 
-                    String imageRef = QuayClient.buildImageReference(
-                            step.organization, step.repository, selectedTag);
+                    String imageRef = QuayClient.buildImageReference(step.organization, step.repository, selectedTag);
 
                     listener.getLogger().println("[Quay.io] Image reference: " + imageRef);
                     return imageRef;
@@ -177,14 +175,9 @@ public class QuayImageStep extends Step {
 
             Item item = run.getParent();
             StringCredentials credentials = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(
-                            StringCredentials.class,
-                            item,
-                            ACL.SYSTEM2,
-                            Collections.emptyList()
-                    ),
-                    CredentialsMatchers.withId(credentialsId)
-            );
+                    CredentialsProvider.lookupCredentialsInItem(
+                            StringCredentials.class, item, ACL.SYSTEM2, Collections.emptyList()),
+                    CredentialsMatchers.withId(credentialsId));
 
             if (credentials == null) {
                 LOGGER.warning("Credentials not found: " + credentialsId);
@@ -223,8 +216,7 @@ public class QuayImageStep extends Step {
          * Populate credentials dropdown for snippet generator.
          */
         @POST
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item,
-                                                      @QueryParameter String credentialsId) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String credentialsId) {
             StandardListBoxModel model = new StandardListBoxModel();
 
             if (item == null) {
@@ -232,8 +224,7 @@ public class QuayImageStep extends Step {
                     return model.includeCurrentValue(credentialsId);
                 }
             } else {
-                if (!item.hasPermission(Item.EXTENDED_READ) &&
-                    !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
                     return model.includeCurrentValue(credentialsId);
                 }
             }

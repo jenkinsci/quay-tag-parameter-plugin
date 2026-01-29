@@ -1,10 +1,10 @@
 package io.jenkins.plugins.quay;
 
+import static org.junit.Assert.*;
+
 import io.jenkins.plugins.quay.model.QuayTag;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Unit tests for QuayClient.

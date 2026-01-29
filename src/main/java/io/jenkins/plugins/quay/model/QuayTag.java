@@ -2,9 +2,7 @@ package io.jenkins.plugins.quay.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * Represents a single tag from a Quay.io repository.
@@ -35,8 +33,7 @@ public class QuayTag implements Serializable, Comparable<QuayTag> {
     @JsonProperty("end_ts")
     private Long endTimestamp;
 
-    public QuayTag() {
-    }
+    public QuayTag() {}
 
     public QuayTag(String name) {
         this.name = name;
@@ -112,6 +109,26 @@ public class QuayTag implements Serializable, Comparable<QuayTag> {
     public int compareTo(QuayTag other) {
         // Sort by timestamp descending (most recent first)
         return Long.compare(other.getSortTimestamp(), this.getSortTimestamp());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        QuayTag other = (QuayTag) obj;
+        if (name == null) {
+            return other.name == null;
+        }
+        return name.equals(other.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name != null ? name.hashCode() : 0;
     }
 
     @Override

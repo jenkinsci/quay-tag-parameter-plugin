@@ -2,7 +2,6 @@ package io.jenkins.plugins.quay.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.Serializable;
 
 /**
@@ -107,7 +106,6 @@ public class QuayTag implements Serializable, Comparable<QuayTag> {
     }
 
     @Override
-    @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
     public int compareTo(QuayTag other) {
         // Sort by timestamp descending (most recent first)
         return Long.compare(other.getSortTimestamp(), this.getSortTimestamp());

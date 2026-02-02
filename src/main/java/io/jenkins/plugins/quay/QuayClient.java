@@ -1,7 +1,6 @@
 package io.jenkins.plugins.quay;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.util.Secret;
 import io.jenkins.plugins.quay.model.QuayTag;
 import io.jenkins.plugins.quay.model.QuayTagResponse;
@@ -173,7 +172,6 @@ public class QuayClient {
         return String.format("quay.io/%s/%s:%s", organization, repository, tag);
     }
 
-    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     private List<QuayTag> fetchTagsFromApi(String organization, String repository, int limit) throws QuayApiException {
         String url = String.format(
                 "%s/repository/%s/%s/tag/?limit=%d&onlyActiveTags=true",

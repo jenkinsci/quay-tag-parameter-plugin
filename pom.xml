@@ -28,12 +28,12 @@
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
-    <tag>${scmTag}</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
   </scm>
 
   <properties>
-    <changelist>999999-SNAPSHOT</changelist>
+    <changelist>-SNAPSHOT</changelist>
     <jenkins.baseline>2.528</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>

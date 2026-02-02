@@ -11,7 +11,7 @@
 
   <groupId>io.jenkins.plugins</groupId>
   <artifactId>quay-tag-parameter</artifactId>
-  <version>${changelist}</version>
+  <version>1.0.0</version>
   <packaging>hpi</packaging>
 
   <name>Quay Tag Parameter Plugin</name>
@@ -28,12 +28,12 @@
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
-    <tag>${scmTag}</tag>
+    <tag>quay-tag-parameter-1.0.0</tag>
     <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
   </scm>
 
   <properties>
-    <changelist>999999-SNAPSHOT</changelist>
+    <changelist>-SNAPSHOT</changelist>
     <jenkins.baseline>2.528</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>

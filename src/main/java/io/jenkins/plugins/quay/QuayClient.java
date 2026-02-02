@@ -190,7 +190,8 @@ public class QuayClient {
                 handleErrorResponse(response, organization, repository);
             }
 
-            String responseBody = response.body() != null ? response.body().string() : "";
+            okhttp3.ResponseBody body = response.body();
+            String responseBody = body != null ? body.string() : "";
             QuayTagResponse tagResponse = objectMapper.readValue(responseBody, QuayTagResponse.class);
 
             List<QuayTag> tags = tagResponse.getTags();

@@ -11,7 +11,7 @@
 
   <groupId>io.jenkins.plugins</groupId>
   <artifactId>quay-tag-parameter</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
   <name>Quay Tag Parameter Plugin</name>
@@ -33,6 +33,7 @@
   </scm>
 
   <properties>
+    <revision>1.0.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <jenkins.baseline>2.528</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>

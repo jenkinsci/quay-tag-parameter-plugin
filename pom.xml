@@ -28,7 +28,7 @@
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/quay-tag-parameter-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/quay-tag-parameter-plugin.git</developerConnection>
-    <tag>quay-tag-parameter-1.0.0</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/jenkinsci/quay-tag-parameter-plugin</url>
   </scm>
 

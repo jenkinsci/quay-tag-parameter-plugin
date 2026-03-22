@@ -10,6 +10,10 @@
         <f:textarea/>
     </f:entry>
 
+    <f:entry title="${%Quay Endpoint}" field="quayEndpoint">
+        <f:textbox default="quay.io"/>
+    </f:entry>
+
     <f:entry title="${%Organization}" field="organization">
         <f:textbox clazz="required" checkMethod="post"/>
     </f:entry>
@@ -32,6 +36,6 @@
 
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}"
                       method="testConnection"
-                      with="organization,repository,credentialsId"/>
+                      with="quayEndpoint,organization,repository,credentialsId"/>
 
 </j:jelly>

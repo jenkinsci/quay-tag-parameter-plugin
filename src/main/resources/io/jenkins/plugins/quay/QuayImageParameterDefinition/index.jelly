@@ -24,7 +24,7 @@
             <div class="jenkins-!-margin-top-1 jenkins-!-text-color-secondary">
                 <strong>Repository: </strong>
                 <span style="font-family: monospace;">
-                    quay.io/${it.organization}/${it.repository}
+                    ${it.quayEndpoint}/${it.organization}/${it.repository}
                 </span>
             </div>
         </div>

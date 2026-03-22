@@ -19,13 +19,33 @@ public class QuayImageParameterValue extends ParameterValue {
     private final String organization;
     private final String repository;
     private final String tag;
+    private String quayEndpoint;
 
     @DataBoundConstructor
-    public QuayImageParameterValue(String name, String organization, String repository, String tag) {
+    public QuayImageParameterValue(
+            String name, String organization, String repository, String tag, String quayEndpoint) {
         super(name);
         this.organization = organization;
         this.repository = repository;
         this.tag = tag;
+        this.quayEndpoint = quayEndpoint != null && !quayEndpoint.trim().isEmpty() ? quayEndpoint : "quay.io";
+    }
+
+    /**
+     * Backward-compatible constructor using default quay.io endpoint.
+     */
+    public QuayImageParameterValue(String name, String organization, String repository, String tag) {
+        this(name, organization, repository, tag, "quay.io");
+    }
+
+    /**
+     * Handle deserialization of old data that lacks the quayEndpoint field.
+     */
+    private Object readResolve() {
+        if (quayEndpoint == null || quayEndpoint.trim().isEmpty()) {
+            quayEndpoint = "quay.io";
+        }
+        return this;
     }
 
     public String getOrganization() {
@@ -40,11 +60,15 @@ public class QuayImageParameterValue extends ParameterValue {
         return tag;
     }
 
+    public String getQuayEndpoint() {
+        return quayEndpoint;
+    }
+
     /**
      * Get the full image reference (e.g., quay.io/org/repo:tag)
      */
     public String getImageReference() {
-        return QuayClient.buildImageReference(organization, repository, tag);
+        return QuayClient.buildImageReference(quayEndpoint, organization, repository, tag);
     }
 
     @Override
@@ -63,7 +87,8 @@ public class QuayImageParameterValue extends ParameterValue {
         env.put(paramName + "_ORG", organization);
         env.put(paramName + "_REPO", repository);
         env.put(paramName + "_TAG", tag);
-        env.put(paramName + "_FULL_REPO", "quay.io/" + organization + "/" + repository);
+        env.put(paramName + "_FULL_REPO", quayEndpoint + "/" + organization + "/" + repository);
+        env.put(paramName + "_ENDPOINT", quayEndpoint);
     }
 
     @Override
@@ -83,7 +108,10 @@ public class QuayImageParameterValue extends ParameterValue {
                 return tag;
             }
             if ((paramName + "_FULL_REPO").equals(name)) {
-                return "quay.io/" + organization + "/" + repository;
+                return quayEndpoint + "/" + organization + "/" + repository;
+            }
+            if ((paramName + "_ENDPOINT").equals(name)) {
+                return quayEndpoint;
             }
             return null;
         };
@@ -102,18 +130,20 @@ public class QuayImageParameterValue extends ParameterValue {
         QuayImageParameterValue that = (QuayImageParameterValue) o;
         return Objects.equals(organization, that.organization)
                 && Objects.equals(repository, that.repository)
-                && Objects.equals(tag, that.tag);
+                && Objects.equals(tag, that.tag)
+                && Objects.equals(quayEndpoint, that.quayEndpoint);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), organization, repository, tag);
+        return Objects.hash(super.hashCode(), organization, repository, tag, quayEndpoint);
     }
 
     @Override
     public String toString() {
         return "QuayImageParameterValue{" + "name='"
-                + getName() + '\'' + ", organization='"
+                + getName() + '\'' + ", quayEndpoint='"
+                + quayEndpoint + '\'' + ", organization='"
                 + organization + '\'' + ", repository='"
                 + repository + '\'' + ", tag='"
                 + tag + '\'' + '}';

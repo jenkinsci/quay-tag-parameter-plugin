@@ -28,6 +28,36 @@ public class QuayClientTest {
         assertEquals("quay.io/coreos/etcd:latest", result);
     }
 
+    @Test
+    public void testBuildImageReferenceWithCustomEndpoint() {
+        String result = QuayClient.buildImageReference("quay.mycompany.com", "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.mycompany.com/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    public void testBuildImageReferenceWithCustomEndpointStripsProtocol() {
+        String result = QuayClient.buildImageReference("https://quay.mycompany.com", "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.mycompany.com/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    public void testBuildImageReferenceWithNullEndpointDefaultsToQuayIo() {
+        String result = QuayClient.buildImageReference(null, "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.io/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    public void testCustomEndpointClient() {
+        QuayClient client = new QuayClient("quay.mycompany.com", (String) null);
+        assertEquals("quay.mycompany.com", client.getQuayEndpoint());
+    }
+
+    @Test
+    public void testDefaultEndpointClient() {
+        QuayClient client = new QuayClient();
+        assertEquals("quay.io", client.getQuayEndpoint());
+    }
+
     @Test(expected = QuayClient.QuayApiException.class)
     public void testEmptyOrganization() throws QuayClient.QuayApiException {
         QuayClient client = new QuayClient();

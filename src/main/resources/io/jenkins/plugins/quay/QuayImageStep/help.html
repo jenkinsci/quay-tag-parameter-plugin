@@ -38,8 +38,9 @@ tags.each { tag ->
 
     <h3>Parameters</h3>
     <ul>
-        <li><code>organization</code> (required) - Quay.io organization/namespace</li>
+        <li><code>organization</code> (required) - Quay organization/namespace</li>
         <li><code>repository</code> (required) - Repository name</li>
+        <li><code>quayEndpoint</code> (optional) - Quay registry hostname (default: quay.io). For self-hosted Quay, use your instance hostname (e.g., quay.mycompany.com)</li>
         <li><code>credentialsId</code> (optional) - Jenkins credential ID for private repos</li>
         <li><code>tag</code> (optional) - Specific tag to use (defaults to most recent)</li>
         <li><code>listTags</code> (optional) - Return array of tag names instead of image reference</li>

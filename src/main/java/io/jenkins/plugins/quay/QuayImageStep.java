@@ -50,6 +50,7 @@ public class QuayImageStep extends Step {
 
     private final String organization;
     private final String repository;
+    private String quayEndpoint;
     private String credentialsId;
     private String tag;
     private boolean listTags = false;
@@ -67,6 +68,15 @@ public class QuayImageStep extends Step {
 
     public String getRepository() {
         return repository;
+    }
+
+    public String getQuayEndpoint() {
+        return quayEndpoint != null && !quayEndpoint.trim().isEmpty() ? quayEndpoint : "quay.io";
+    }
+
+    @DataBoundSetter
+    public void setQuayEndpoint(String quayEndpoint) {
+        this.quayEndpoint = quayEndpoint;
     }
 
     public String getCredentialsId() {
@@ -132,7 +142,7 @@ public class QuayImageStep extends Step {
             // Resolve credentials
             String token = resolveCredentials(run, step.credentialsId);
 
-            QuayClient client = new QuayClient(token);
+            QuayClient client = new QuayClient(step.getQuayEndpoint(), token);
 
             try {
                 if (step.listTags) {
@@ -157,7 +167,8 @@ public class QuayImageStep extends Step {
                         listener.getLogger().println("[Quay.io] Using most recent tag: " + selectedTag);
                     }
 
-                    String imageRef = QuayClient.buildImageReference(step.organization, step.repository, selectedTag);
+                    String imageRef = QuayClient.buildImageReference(
+                            step.getQuayEndpoint(), step.organization, step.repository, selectedTag);
 
                     listener.getLogger().println("[Quay.io] Image reference: " + imageRef);
                     return imageRef;

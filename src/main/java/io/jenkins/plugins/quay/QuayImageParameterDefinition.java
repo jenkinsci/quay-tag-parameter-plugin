@@ -39,6 +39,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
 
     private final String organization;
     private final String repository;
+    private String quayEndpoint;
     private String credentialsId;
     private int tagLimit = DEFAULT_TAG_LIMIT;
     private String defaultTag;
@@ -56,6 +57,15 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
 
     public String getRepository() {
         return repository;
+    }
+
+    public String getQuayEndpoint() {
+        return quayEndpoint != null && !quayEndpoint.trim().isEmpty() ? quayEndpoint : "quay.io";
+    }
+
+    @DataBoundSetter
+    public void setQuayEndpoint(String quayEndpoint) {
+        this.quayEndpoint = quayEndpoint;
     }
 
     public String getCredentialsId() {
@@ -103,7 +113,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
             tag = defaultTag != null ? defaultTag : "latest";
         }
 
-        return new QuayImageParameterValue(getName(), organization, repository, tag);
+        return new QuayImageParameterValue(getName(), organization, repository, tag, getQuayEndpoint());
     }
 
     @Override
@@ -112,20 +122,20 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
         String[] valueParams = req.getParameterValues("value");
 
         if (tagValues != null && tagValues.length > 0) {
-            return new QuayImageParameterValue(getName(), organization, repository, tagValues[0]);
+            return new QuayImageParameterValue(getName(), organization, repository, tagValues[0], getQuayEndpoint());
         }
         if (valueParams != null && valueParams.length > 0) {
-            return new QuayImageParameterValue(getName(), organization, repository, valueParams[0]);
+            return new QuayImageParameterValue(getName(), organization, repository, valueParams[0], getQuayEndpoint());
         }
         // Return default value if no tag specified
         String tag = defaultTag != null ? defaultTag : "latest";
-        return new QuayImageParameterValue(getName(), organization, repository, tag);
+        return new QuayImageParameterValue(getName(), organization, repository, tag, getQuayEndpoint());
     }
 
     @Override
     public ParameterValue getDefaultParameterValue() {
         String tag = defaultTag != null && !defaultTag.trim().isEmpty() ? defaultTag : "latest";
-        return new QuayImageParameterValue(getName(), organization, repository, tag);
+        return new QuayImageParameterValue(getName(), organization, repository, tag, getQuayEndpoint());
     }
 
     /**
@@ -134,7 +144,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
     public List<QuayTag> getAvailableTags() {
         try {
             String token = resolveCredentials(credentialsId);
-            QuayClient client = new QuayClient(token);
+            QuayClient client = new QuayClient(getQuayEndpoint(), token);
             return client.getTags(organization, repository, tagLimit);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fetch tags for " + organization + "/" + repository, e);
@@ -193,6 +203,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
         @POST
         public ListBoxModel doFillTagItems(
                 @AncestorInPath Item item,
+                @QueryParameter String quayEndpoint,
                 @QueryParameter String organization,
                 @QueryParameter String repository,
                 @QueryParameter String credentialsId,
@@ -225,7 +236,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 }
 
                 int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
-                QuayClient client = new QuayClient(token);
+                QuayClient client = new QuayClient(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, limit);
 
                 if (tags.isEmpty()) {
@@ -281,6 +292,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
         @POST
         public FormValidation doTestConnection(
                 @AncestorInPath Item item,
+                @QueryParameter String quayEndpoint,
                 @QueryParameter String organization,
                 @QueryParameter String repository,
                 @QueryParameter String credentialsId) {
@@ -309,7 +321,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                     }
                 }
 
-                QuayClient client = new QuayClient(token);
+                QuayClient client = new QuayClient(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, 5);
 
                 return FormValidation.ok("Success! Found " + tags.size() + " tags.");

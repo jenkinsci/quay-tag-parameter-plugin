@@ -14,6 +14,7 @@
             <li><code>${PARAM_NAME}_REPO</code> - Repository name</li>
             <li><code>${PARAM_NAME}_TAG</code> - Selected tag</li>
             <li><code>${PARAM_NAME}_FULL_REPO</code> - Full repository path (e.g., quay.io/org/repo)</li>
+            <li><code>${PARAM_NAME}_ENDPOINT</code> - Quay registry endpoint (e.g., quay.io)</li>
         </ul>
         <p>
             For private repositories, create a Quay.io robot account and add the token

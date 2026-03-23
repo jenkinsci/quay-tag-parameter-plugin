@@ -26,6 +26,7 @@ class QuayImageStepTest {
 
         assertEquals("myorg", step.getOrganization());
         assertEquals("myrepo", step.getRepository());
+        assertEquals("quay.io", step.getQuayEndpoint());
         assertNull(step.getCredentialsId());
         assertNull(step.getTag());
         assertFalse(step.isListTags());
@@ -35,11 +36,13 @@ class QuayImageStepTest {
     @Test
     void testStepWithAllOptions() {
         QuayImageStep step = new QuayImageStep("myorg", "myrepo");
+        step.setQuayEndpoint("quay.mycompany.com");
         step.setCredentialsId("my-creds");
         step.setTag("v1.0.0");
         step.setListTags(true);
         step.setTagLimit(50);
 
+        assertEquals("quay.mycompany.com", step.getQuayEndpoint());
         assertEquals("my-creds", step.getCredentialsId());
         assertEquals("v1.0.0", step.getTag());
         assertTrue(step.isListTags());

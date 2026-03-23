@@ -25,7 +25,7 @@ import okhttp3.Response;
 public class QuayClient {
 
     private static final Logger LOGGER = Logger.getLogger(QuayClient.class.getName());
-    private static final String QUAY_API_BASE = "https://quay.io/api/v1";
+    private static final String DEFAULT_QUAY_ENDPOINT = "quay.io";
     private static final int DEFAULT_LIMIT = 20;
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 30;
@@ -34,6 +34,8 @@ public class QuayClient {
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final Secret apiToken;
+    private final String quayEndpoint;
+    private final String apiBase;
 
     // Simple cache with TTL
     private static final Map<String, CacheEntry> tagCache = new ConcurrentHashMap<>();
@@ -53,33 +55,80 @@ public class QuayClient {
     }
 
     /**
-     * Create a QuayClient for public repository access.
+     * Create a QuayClient for public repository access using the default quay.io endpoint.
      */
     public QuayClient() {
-        this((Secret) null);
+        this(DEFAULT_QUAY_ENDPOINT, (Secret) null);
     }
 
     /**
-     * Create a QuayClient with optional authentication token.
+     * Create a QuayClient with optional authentication token using the default quay.io endpoint.
      *
-     * @param apiToken Quay.io API token (robot token) for private repos, or null for public repos
+     * @param apiToken Quay API token (robot token) for private repos, or null for public repos
      */
     public QuayClient(String apiToken) {
-        this(apiToken != null && !apiToken.trim().isEmpty() ? Secret.fromString(apiToken) : null);
+        this(DEFAULT_QUAY_ENDPOINT, apiToken);
     }
 
     /**
-     * Create a QuayClient with optional authentication token as Secret.
+     * Create a QuayClient with optional authentication token as Secret using the default quay.io endpoint.
      *
-     * @param apiToken Quay.io API token as Secret for private repos, or null for public repos
+     * @param apiToken Quay API token as Secret for private repos, or null for public repos
      */
     public QuayClient(Secret apiToken) {
+        this(DEFAULT_QUAY_ENDPOINT, apiToken);
+    }
+
+    /**
+     * Create a QuayClient with a custom Quay endpoint and optional authentication token.
+     *
+     * @param quayEndpoint The Quay registry hostname (e.g., quay.io or quay.mycompany.com)
+     * @param apiToken     Quay API token (robot token) for private repos, or null for public repos
+     */
+    public QuayClient(String quayEndpoint, String apiToken) {
+        this(quayEndpoint, apiToken != null && !apiToken.trim().isEmpty() ? Secret.fromString(apiToken) : null);
+    }
+
+    /**
+     * Create a QuayClient with a custom Quay endpoint and optional authentication token as Secret.
+     *
+     * @param quayEndpoint The Quay registry hostname (e.g., quay.io or quay.mycompany.com)
+     * @param apiToken     Quay API token as Secret for private repos, or null for public repos
+     */
+    public QuayClient(String quayEndpoint, Secret apiToken) {
+        this.quayEndpoint = normalizeEndpoint(quayEndpoint);
+        this.apiBase = "https://" + this.quayEndpoint + "/api/v1";
         this.apiToken = apiToken;
         this.objectMapper = new ObjectMapper();
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .build();
+    }
+
+    /**
+     * Get the Quay endpoint hostname.
+     */
+    public String getQuayEndpoint() {
+        return quayEndpoint;
+    }
+
+    private static String normalizeEndpoint(String endpoint) {
+        if (endpoint == null || endpoint.trim().isEmpty()) {
+            return DEFAULT_QUAY_ENDPOINT;
+        }
+        String normalized = endpoint.trim();
+        // Strip protocol if provided
+        if (normalized.startsWith("https://")) {
+            normalized = normalized.substring("https://".length());
+        } else if (normalized.startsWith("http://")) {
+            normalized = normalized.substring("http://".length());
+        }
+        // Strip trailing slash
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized.isEmpty() ? DEFAULT_QUAY_ENDPOINT : normalized;
     }
 
     /**
@@ -139,7 +188,7 @@ public class QuayClient {
      */
     public boolean validateRepository(String organization, String repository) {
         try {
-            String url = String.format("%s/repository/%s/%s", QUAY_API_BASE, organization, repository);
+            String url = String.format("%s/repository/%s/%s", apiBase, organization, repository);
             Request.Builder requestBuilder = new Request.Builder().url(url).get();
 
             addAuthHeader(requestBuilder);
@@ -161,7 +210,7 @@ public class QuayClient {
     }
 
     /**
-     * Build the full image reference string.
+     * Build the full image reference string using the default quay.io endpoint.
      *
      * @param organization The organization/namespace
      * @param repository   The repository name
@@ -169,13 +218,26 @@ public class QuayClient {
      * @return Full image reference (e.g., quay.io/org/repo:tag)
      */
     public static String buildImageReference(String organization, String repository, String tag) {
-        return String.format("quay.io/%s/%s:%s", organization, repository, tag);
+        return buildImageReference(DEFAULT_QUAY_ENDPOINT, organization, repository, tag);
+    }
+
+    /**
+     * Build the full image reference string with a custom endpoint.
+     *
+     * @param quayEndpoint The Quay registry hostname
+     * @param organization The organization/namespace
+     * @param repository   The repository name
+     * @param tag          The tag name
+     * @return Full image reference (e.g., quay.mycompany.com/org/repo:tag)
+     */
+    public static String buildImageReference(String quayEndpoint, String organization, String repository, String tag) {
+        String endpoint = normalizeEndpoint(quayEndpoint);
+        return String.format("%s/%s/%s:%s", endpoint, organization, repository, tag);
     }
 
     private List<QuayTag> fetchTagsFromApi(String organization, String repository, int limit) throws QuayApiException {
         String url = String.format(
-                "%s/repository/%s/%s/tag/?limit=%d&onlyActiveTags=true",
-                QUAY_API_BASE, organization, repository, limit);
+                "%s/repository/%s/%s/tag/?limit=%d&onlyActiveTags=true", apiBase, organization, repository, limit);
 
         LOGGER.fine("Fetching tags from: " + url);
 
@@ -259,7 +321,7 @@ public class QuayClient {
     private String buildCacheKey(String organization, String repository, int limit) {
         String tokenHash =
                 apiToken != null ? String.valueOf(apiToken.getEncryptedValue().hashCode()) : "public";
-        return String.format("%s/%s:%d:%s", organization, repository, limit, tokenHash);
+        return String.format("%s:%s/%s:%d:%s", quayEndpoint, organization, repository, limit, tokenHash);
     }
 
     /**

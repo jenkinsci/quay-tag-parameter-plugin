@@ -29,6 +29,36 @@ class QuayClientTest {
     }
 
     @Test
+    void testBuildImageReferenceWithCustomEndpoint() {
+        String result = QuayClient.buildImageReference("quay.mycompany.com", "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.mycompany.com/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    void testBuildImageReferenceWithCustomEndpointStripsProtocol() {
+        String result = QuayClient.buildImageReference("https://quay.mycompany.com", "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.mycompany.com/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    void testBuildImageReferenceWithNullEndpointDefaultsToQuayIo() {
+        String result = QuayClient.buildImageReference(null, "myorg", "myrepo", "v1.0.0");
+        assertEquals("quay.io/myorg/myrepo:v1.0.0", result);
+    }
+
+    @Test
+    void testCustomEndpointClient() {
+        QuayClient client = new QuayClient("quay.mycompany.com", (String) null);
+        assertEquals("quay.mycompany.com", client.getQuayEndpoint());
+    }
+
+    @Test
+    void testDefaultEndpointClient() {
+        QuayClient client = new QuayClient();
+        assertEquals("quay.io", client.getQuayEndpoint());
+    }
+
+    @Test
     void testEmptyOrganization() {
         QuayClient client = new QuayClient();
         assertThrows(QuayClient.QuayApiException.class, () -> client.getTags("", "repo"));

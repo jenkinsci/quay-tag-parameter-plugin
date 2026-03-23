@@ -46,7 +46,21 @@ class QuayImageParameterDefinitionTest {
         assertEquals("coreos", value.getOrganization());
         assertEquals("etcd", value.getRepository());
         assertEquals("v3.5.0", value.getTag());
+        assertEquals("quay.io", value.getQuayEndpoint());
         assertEquals("quay.io/coreos/etcd:v3.5.0", value.getImageReference());
+    }
+
+    @Test
+    void testDefaultParameterValueWithCustomEndpoint() throws Exception {
+        QuayImageParameterDefinition param =
+                new QuayImageParameterDefinition("QUAY_IMAGE", "Select an image", "coreos", "etcd");
+        param.setQuayEndpoint("quay.mycompany.com");
+        param.setDefaultTag("v3.5.0");
+
+        QuayImageParameterValue value = (QuayImageParameterValue) param.getDefaultParameterValue();
+
+        assertEquals("quay.mycompany.com", value.getQuayEndpoint());
+        assertEquals("quay.mycompany.com/coreos/etcd:v3.5.0", value.getImageReference());
     }
 
     @Test

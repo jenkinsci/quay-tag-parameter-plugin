@@ -24,6 +24,7 @@ buildNumber.properties
 *~
 .factorypath
 .apt_generated/
+.claude/
 
 # Jenkins
 work/

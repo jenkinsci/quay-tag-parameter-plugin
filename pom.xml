@@ -36,7 +36,7 @@
     <revision>1.0.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <jenkins.baseline>2.528</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+    <jenkins.version>${jenkins.baseline}.1</jenkins.version>
     <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>
     <hpi.compatibleSinceVersion>1.0.0</hpi.compatibleSinceVersion>
     <spotless.check.skip>false</spotless.check.skip>
@@ -49,7 +49,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>5983.v443959746f1f</version>
+        <version>6040.v20da_0b_1245d3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

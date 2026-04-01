@@ -1,11 +1,12 @@
 # Quay Tag Parameter Plugin
 
-A Jenkins plugin that integrates with Quay.io to fetch and select Docker image tags from Quay repositories. Supports both Freestyle jobs (via build parameters) and Pipeline jobs (via the `quayImage` step).
+A Jenkins plugin that integrates with Quay.io (or any private Quay registry) to fetch and select Docker image tags from Quay repositories. Supports both Freestyle jobs (via build parameters) and Pipeline jobs (via the `quayImage` step).
 
 ## Features
 
 - **Build Parameter**: Dropdown selection of Quay.io image tags in job configuration
 - **Pipeline Step**: `quayImage()` step for fetching image references in Jenkinsfiles
+- **Custom Quay Endpoint**: Connect to `quay.io` or any private/on-premise Quay registry (e.g., `quay.mycompany.com`)
 - **Public & Private Repos**: Support for both public repositories and private repos via robot tokens
 - **Dynamic Tag Fetching**: Real-time tag updates via AJAX
 - **Caching**: 5-minute cache for API responses to reduce load
@@ -24,7 +25,7 @@ A Jenkins plugin that integrates with Quay.io to fetch and select Docker image t
 
 #### Getting a Robot Token from Quay.io
 
-1. Log in to [quay.io](https://quay.io)
+1. Log in to [quay.io](https://quay.io) (or your private Quay registry)
 2. Go to your organization > **Robot Accounts**
 3. Create a new robot account
 4. Grant read access to your repository
@@ -39,7 +40,8 @@ A Jenkins plugin that integrates with Quay.io to fetch and select Docker image t
 3. Add parameter > **Quay.io Image Parameter**
 4. Configure:
    - **Name**: `QUAY_IMAGE` (or any name)
-   - **Organization**: Your Quay.io org (e.g., `mycompany`)
+   - **Quay Endpoint**: Registry hostname (default: `quay.io`, or use `quay.mycompany.com` for private registries)
+   - **Organization**: Your Quay org (e.g., `mycompany`)
    - **Repository**: Repository name (e.g., `myapp`)
    - **Credentials**: Select your robot token (optional for public repos)
    - **Tag Limit**: Number of tags to show (default: 20)
@@ -58,6 +60,7 @@ During the build, these environment variables are available:
 | `QUAY_IMAGE_REPO` | `myapp` |
 | `QUAY_IMAGE_TAG` | `v1.2.3` |
 | `QUAY_IMAGE_FULL_REPO` | `quay.io/mycompany/myapp` |
+| `QUAY_IMAGE_ENDPOINT` | `quay.io` |
 
 ### Pipeline - Jenkinsfile
 
@@ -95,6 +98,19 @@ def imageRef = quayImage(
 // Output: quay.io/my-org/my-repo:v1.0.0
 ```
 
+#### Using a Private Quay Registry
+
+```groovy
+def imageRef = quayImage(
+    organization: 'my-org',
+    repository: 'my-repo',
+    quayEndpoint: 'quay.mycompany.com',
+    credentialsId: 'quay-robot-token',
+    tag: 'v1.0.0'
+)
+// Output: quay.mycompany.com/my-org/my-repo:v1.0.0
+```
+
 #### List Available Tags
 
 ```groovy
@@ -128,6 +144,7 @@ pipeline {
         quayImageParameter(
             name: 'DEPLOY_IMAGE',
             description: 'Select image to deploy',
+            quayEndpoint: 'quay.io',       // optional, defaults to quay.io
             organization: 'mycompany',
             repository: 'myapp',
             credentialsId: 'quay-robot-token',
@@ -152,15 +169,16 @@ pipeline {
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `organization` | String | Yes | - | Quay.io organization/namespace |
+| `organization` | String | Yes | - | Quay organization/namespace |
 | `repository` | String | Yes | - | Repository name |
+| `quayEndpoint` | String | No | `quay.io` | Quay registry hostname (e.g., `quay.mycompany.com`) |
 | `credentialsId` | String | No | - | Jenkins credential ID for private repos |
 | `tag` | String | No | (most recent) | Specific tag to use |
 | `listTags` | Boolean | No | `false` | Return array of tag names |
 | `tagLimit` | Integer | No | `20` | Max tags when listTags=true |
 
 **Returns:**
-- If `listTags=false`: String with full image reference (e.g., `quay.io/org/repo:tag`)
+- If `listTags=false`: String with full image reference (e.g., `quay.io/org/repo:tag` or `quay.mycompany.com/org/repo:tag`)
 - If `listTags=true`: String array of tag names
 
 ## Troubleshooting
@@ -192,6 +210,7 @@ pipeline {
 - API tokens are stored using Jenkins Credentials API
 - Tokens are never logged or exposed in build output
 - All API calls use HTTPS
+- Custom endpoints are normalized (protocol stripped, trailing slashes removed)
 - Input validation prevents injection attacks
 
 ## Contributing

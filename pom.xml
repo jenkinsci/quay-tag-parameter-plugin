@@ -36,7 +36,7 @@
     <revision>1.0.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <jenkins.baseline>2.528</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+    <jenkins.version>2.528.1</jenkins.version>
     <gitHubRepo>jenkinsci/quay-tag-parameter-plugin</gitHubRepo>
     <hpi.compatibleSinceVersion>1.0.0</hpi.compatibleSinceVersion>
     <spotless.check.skip>false</spotless.check.skip>
@@ -52,6 +52,16 @@
         <version>6040.v20da_0b_1245d3</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>credentials</artifactId>
+        <version>1447.v4cb_b_539b_5321</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>jackson2-api</artifactId>
+        <version>2.20.0-411.v6ef8fdee4fe9</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

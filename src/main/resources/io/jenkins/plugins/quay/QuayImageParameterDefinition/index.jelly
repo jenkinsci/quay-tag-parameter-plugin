@@ -12,30 +12,18 @@
              data-default-tag="${it.defaultTag}"
              data-fetch-url="${rootURL}/descriptorByName/io.jenkins.plugins.quay.QuayImageParameterDefinition/fetchTagsJson">
             <input type="hidden" name="name" value="${it.name}"/>
+            <input type="hidden" class="quay-repo-input" name="repository" value="${it.repository}"/>
 
-            <div class="jenkins-!-margin-bottom-1">
-                <label class="jenkins-!-text-color-secondary">Repository</label>
-                <input type="text" class="jenkins-input quay-repo-input"
-                       name="repository" value="${it.repository}"/>
+            <div style="margin-bottom: 16px;">
+                <label class="jenkins-!-text-color-secondary"
+                       style="display: block; margin-bottom: 6px; font-weight: 600;">Tag</label>
+                <div class="jenkins-select">
+                    <select class="jenkins-select__input quay-tag-select" name="value">
+                        <option value="">-- Loading tags... --</option>
+                    </select>
+                </div>
             </div>
-
-            <j:set var="tagList" value="${it.availableTags}"/>
-            <j:set var="currentDefault" value="${it.defaultTag}"/>
-            <div class="jenkins-select">
-                <select class="jenkins-select__input quay-tag-select" name="value">
-                    <j:choose>
-                        <j:when test="${!empty(tagList)}">
-                            <j:forEach var="tag" items="${tagList}">
-                              <f:option selected="${tag.name eq currentDefault}" value="${tag.name}">${tag.name}</f:option>
-                            </j:forEach>
-                        </j:when>
-                        <j:otherwise>
-                            <option value="">-- No tags available --</option>
-                        </j:otherwise>
-                    </j:choose>
-                </select>
-            </div>
-            <div class="jenkins-!-margin-top-1 jenkins-!-text-color-secondary quay-status">
+            <div class="jenkins-!-text-color-secondary quay-status" style="margin-top: 8px;">
                 <strong>Image: </strong>
                 <span class="quay-image-ref" style="font-family: monospace;">
                     ${it.quayEndpoint}/${it.organization}/${it.repository}

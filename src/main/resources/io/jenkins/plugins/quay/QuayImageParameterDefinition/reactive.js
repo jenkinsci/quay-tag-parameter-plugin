@@ -37,6 +37,36 @@ window.QuayReactiveParameter = (function () {
         }
     }
 
+    function findExternalRepoSource(container) {
+        var scope = container.closest('form, .jenkins-form, body') || document;
+        var NAMES = ['REPO_NAME', 'repo', 'repoName', 'repository'];
+
+        var wrappers = scope.querySelectorAll('[name="parameter"]');
+        for (var i = 0; i < wrappers.length; i++) {
+            var w = wrappers[i];
+            if (container.contains(w) || w.contains(container)) continue;
+            var nameInput = w.querySelector('input[name="name"]');
+            if (!nameInput) continue;
+            if (NAMES.indexOf(nameInput.value) === -1) continue;
+            var valueEl = w.querySelector('[name="value"]');
+            if (valueEl) return valueEl;
+        }
+
+        for (var j = 0; j < NAMES.length; j++) {
+            var candidates = scope.querySelectorAll('[name="' + NAMES[j] + '"]');
+            for (var k = 0; k < candidates.length; k++) {
+                if (!container.contains(candidates[k])) return candidates[k];
+            }
+        }
+        return null;
+    }
+
+    function getRepoValue(container, externalEl) {
+        if (externalEl) return (externalEl.value || '').trim();
+        var repoInput = container.querySelector('.quay-repo-input');
+        return repoInput ? (repoInput.value || '').trim() : '';
+    }
+
     function refreshTags(container) {
         var url = container.getAttribute('data-fetch-url');
         var endpoint = container.getAttribute('data-quay-endpoint') || 'quay.io';
@@ -47,9 +77,13 @@ window.QuayReactiveParameter = (function () {
 
         var repoInput = container.querySelector('.quay-repo-input');
         var select = container.querySelector('.quay-tag-select');
-        if (!repoInput || !select) return;
+        if (!select) return;
 
-        var repository = (repoInput.value || '').trim();
+        var external = findExternalRepoSource(container);
+        var repository = getRepoValue(container, external);
+
+        if (repoInput) repoInput.value = repository;
+
         setStatus(container, endpoint + '/' + organization + '/' + repository + ' (loading…)');
 
         if (!repository) {
@@ -115,18 +149,96 @@ window.QuayReactiveParameter = (function () {
         };
     }
 
+    function hideRepoField(container) {
+        var repoInput = container.querySelector('.quay-repo-input');
+        if (!repoInput) return;
+        if (repoInput.type === 'hidden') return;
+        var wrapper = repoInput.closest('div');
+        if (wrapper && wrapper !== container) wrapper.style.display = 'none';
+    }
+
     function init(container) {
         if (container.dataset.quayReactiveInitialized === 'true') return;
         container.dataset.quayReactiveInitialized = 'true';
 
-        var repoInput = container.querySelector('.quay-repo-input');
-        if (!repoInput) return;
-
+        var external = findExternalRepoSource(container);
         var debounced = debounce(function () { refreshTags(container); }, 400);
-        repoInput.addEventListener('input', debounced);
-        repoInput.addEventListener('change', function () { refreshTags(container); });
-        repoInput.addEventListener('blur', function () { refreshTags(container); });
+
+        if (external) {
+            hideRepoField(container);
+            external.addEventListener('input', debounced);
+            external.addEventListener('change', function () { refreshTags(container); });
+        } else {
+            var repoInput = container.querySelector('.quay-repo-input');
+            if (repoInput) {
+                repoInput.addEventListener('input', debounced);
+                repoInput.addEventListener('change', function () { refreshTags(container); });
+            }
+        }
+        refreshTags(container);
     }
 
-    return { init: init, refreshTags: refreshTags };
+    function refreshRepos(container) {
+        var url = container.getAttribute('data-fetch-url');
+        var endpoint = container.getAttribute('data-quay-endpoint') || 'quay.io';
+        var organization = container.getAttribute('data-organization') || '';
+        var credentialsId = container.getAttribute('data-credentials-id') || '';
+        var defaultRepo = container.getAttribute('data-default-repository') || '';
+
+        var select = container.querySelector('.quay-repo-select');
+        if (!select) return;
+
+        var body = encodeParams({
+            quayEndpoint: endpoint,
+            organization: organization,
+            credentialsId: credentialsId
+        });
+
+        fetch(url, {
+            method: 'POST',
+            headers: buildHeaders(),
+            credentials: 'same-origin',
+            body: body
+        }).then(function (resp) {
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            return resp.json();
+        }).then(function (data) {
+            select.innerHTML = '';
+            var repos = (data && data.repositories) || [];
+            if (data && data.error && data.error !== null) {
+                var errOpt = document.createElement('option');
+                errOpt.value = '';
+                errOpt.textContent = '-- Error: ' + data.error + ' --';
+                select.appendChild(errOpt);
+            } else if (repos.length === 0) {
+                var noOpt = document.createElement('option');
+                noOpt.value = '';
+                noOpt.textContent = '-- No repositories found --';
+                select.appendChild(noOpt);
+            } else {
+                repos.forEach(function (name) {
+                    var opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    if (name === defaultRepo) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }).catch(function (err) {
+            select.innerHTML = '';
+            var opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '-- Error: ' + err.message + ' --';
+            select.appendChild(opt);
+        });
+    }
+
+    function initRepo(container) {
+        if (container.dataset.quayRepoInitialized === 'true') return;
+        container.dataset.quayRepoInitialized = 'true';
+        refreshRepos(container);
+    }
+
+    return { init: init, initRepo: initRepo, refreshTags: refreshTags, refreshRepos: refreshRepos };
 })();

@@ -29,7 +29,18 @@ public class QuayClient {
     private static final int DEFAULT_LIMIT = 20;
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final int READ_TIMEOUT_SECONDS = 30;
-    private static final long CACHE_TTL_MS = TimeUnit.MINUTES.toMillis(5);
+    private static final long CACHE_TTL_MS = TimeUnit.MINUTES.toMillis(15);
+
+    // Shared OkHttp instance so we don't pay DNS/TCP/TLS setup on every request.
+    // OkHttp pools connections internally, so reuse is essential.
+    private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build();
+
+    // Shared QuayClient instances keyed by endpoint+token-hash so callers don't
+    // construct a new client (and a new ObjectMapper) on every request.
+    private static final Map<String, QuayClient> CLIENT_CACHE = new ConcurrentHashMap<>();
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -97,13 +108,34 @@ public class QuayClient {
      */
     public QuayClient(String quayEndpoint, Secret apiToken) {
         this.quayEndpoint = normalizeEndpoint(quayEndpoint);
-        this.apiBase = "https://" + this.quayEndpoint + "/api/v1";
+        String scheme = "https";
+        if (quayEndpoint != null) {
+            String trimmed = quayEndpoint.trim().toLowerCase();
+            if (trimmed.startsWith("http://")) {
+                scheme = "http";
+            } else if (!trimmed.startsWith("https://")
+                    && (this.quayEndpoint.startsWith("localhost")
+                            || this.quayEndpoint.startsWith("127.0.0.1"))) {
+                // Default local registries to HTTP
+                scheme = "http";
+            }
+        }
+        this.apiBase = scheme + "://" + this.quayEndpoint + "/api/v1";
         this.apiToken = apiToken;
         this.objectMapper = new ObjectMapper();
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .build();
+        this.httpClient = SHARED_HTTP_CLIENT;
+    }
+
+    /**
+     * Returns a shared QuayClient for the given endpoint+token. Avoids recreating
+     * OkHttp/ObjectMapper state on every request, so DNS/TCP/TLS setup is reused
+     * via the underlying OkHttp connection pool.
+     */
+    public static QuayClient getShared(String quayEndpoint, String apiToken) {
+        String ep = (quayEndpoint == null || quayEndpoint.trim().isEmpty()) ? DEFAULT_QUAY_ENDPOINT : quayEndpoint;
+        String tokenKey = (apiToken == null || apiToken.isEmpty()) ? "public" : Integer.toHexString(apiToken.hashCode());
+        String key = ep + "|" + tokenKey;
+        return CLIENT_CACHE.computeIfAbsent(key, k -> new QuayClient(quayEndpoint, apiToken));
     }
 
     /**
@@ -199,6 +231,81 @@ public class QuayClient {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Failed to validate repository: " + e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Fetch repository names under an organization, sorted alphabetically ascending.
+     *
+     * @param organization The organization/namespace
+     * @return List of repository names sorted alphabetically (ascending)
+     * @throws QuayApiException if the API call fails
+     */
+    public List<String> getRepositories(String organization) throws QuayApiException {
+        validateInput(organization, "organization");
+
+        String cacheKey = "repos:" + quayEndpoint + ":" + organization;
+
+        // Check cache first
+        CacheEntry cached = tagCache.get(cacheKey);
+        if (cached != null && !cached.isExpired()) {
+            LOGGER.fine("Returning cached repositories for " + organization);
+            List<String> names = new ArrayList<>();
+            for (QuayTag t : cached.tags) {
+                names.add(t.getName());
+            }
+            return names;
+        }
+
+        // Remove expired entry
+        if (cached != null) {
+            tagCache.remove(cacheKey);
+        }
+
+        String url = String.format("%s/repository?namespace=%s", apiBase, organization);
+        LOGGER.fine("Fetching repositories from: " + url);
+
+        Request.Builder requestBuilder = new Request.Builder().url(url).get().header("Accept", "application/json");
+        addAuthHeader(requestBuilder);
+
+        try (Response response = httpClient.newCall(requestBuilder.build()).execute()) {
+            if (!response.isSuccessful()) {
+                handleErrorResponse(response, organization, "");
+            }
+
+            okhttp3.ResponseBody body = response.body();
+            String responseBody = body != null ? body.string() : "";
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> jsonMap = objectMapper.readValue(responseBody, Map.class);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> repositories = (List<Map<String, Object>>) jsonMap.get("repositories");
+
+            List<String> repoNames = new ArrayList<>();
+            if (repositories != null) {
+                for (Map<String, Object> repo : repositories) {
+                    Object name = repo.get("name");
+                    if (name != null) {
+                        repoNames.add(name.toString());
+                    }
+                }
+            }
+
+            // Sort alphabetically ascending
+            Collections.sort(repoNames, String.CASE_INSENSITIVE_ORDER);
+
+            // Cache using QuayTag wrappers
+            List<QuayTag> tagWrappers = new ArrayList<>();
+            for (String name : repoNames) {
+                tagWrappers.add(new QuayTag(name));
+            }
+            tagCache.put(cacheKey, new CacheEntry(tagWrappers));
+
+            return repoNames;
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Network error fetching repositories: " + e.getMessage());
+            throw new QuayApiException("Network error: " + e.getMessage(), e);
         }
     }
 

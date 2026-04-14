@@ -158,8 +158,10 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
     public List<QuayTag> getAvailableTags() {
         try {
             String token = resolveCredentials(credentialsId);
-            QuayClient client = new QuayClient(getQuayEndpoint(), token);
-            return client.getTags(organization, repository, tagLimit);
+            QuayClient client = QuayClient.getShared(getQuayEndpoint(), token);
+            List<QuayTag> tags = new java.util.ArrayList<>(client.getTags(organization, repository, tagLimit));
+            tags.sort(java.util.Comparator.comparing(QuayTag::getName, String.CASE_INSENSITIVE_ORDER));
+            return tags;
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fetch tags for " + organization + "/" + repository, e);
             return Collections.emptyList();
@@ -250,7 +252,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 }
 
                 int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
-                QuayClient client = new QuayClient(quayEndpoint, token);
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, limit);
 
                 if (tags.isEmpty()) {
@@ -306,8 +308,10 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 }
 
                 int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
-                QuayClient client = new QuayClient(quayEndpoint, token);
-                List<QuayTag> tags = client.getTags(organization.trim(), repository.trim(), limit);
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
+                List<QuayTag> tags = new java.util.ArrayList<>(
+                        client.getTags(organization.trim(), repository.trim(), limit));
+                tags.sort(java.util.Comparator.comparing(QuayTag::getName, String.CASE_INSENSITIVE_ORDER));
                 for (QuayTag t : tags) {
                     tagsArray.add(t.getName());
                 }
@@ -402,7 +406,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                     }
                 }
 
-                QuayClient client = new QuayClient(quayEndpoint, token);
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, 5);
 
                 return FormValidation.ok("Success! Found " + tags.size() + " tags.");

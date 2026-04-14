@@ -1,0 +1,31 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <j:set var="repoContainerId" value="quay-repo-param-${it.name}"/>
+    <f:entry title="${it.name}" description="${it.description}">
+        <div name="parameter" id="${repoContainerId}"
+             data-quay-endpoint="${it.quayEndpoint}"
+             data-organization="${it.organization}"
+             data-credentials-id="${it.credentialsId}"
+             data-default-repository="${it.defaultRepository}"
+             data-fetch-url="${rootURL}/descriptorByName/io.jenkins.plugins.quay.QuayRepositoryParameterDefinition/fetchReposJson">
+            <input type="hidden" name="name" value="${it.name}"/>
+            <div class="jenkins-select">
+                <select class="jenkins-select__input quay-repo-select" name="value">
+                    <option value="">-- Loading repositories... --</option>
+                </select>
+            </div>
+        </div>
+
+        <st:adjunct includes="io.jenkins.plugins.quay.QuayImageParameterDefinition.reactive"/>
+        <script type="text/javascript">
+            (function() {
+                var el = document.getElementById('${repoContainerId}');
+                if (el &amp;&amp; window.QuayReactiveParameter &amp;&amp; window.QuayReactiveParameter.initRepo) {
+                    window.QuayReactiveParameter.initRepo(el);
+                }
+            })();
+        </script>
+    </f:entry>
+</j:jelly>

@@ -114,8 +114,7 @@ public class QuayClient {
             if (trimmed.startsWith("http://")) {
                 scheme = "http";
             } else if (!trimmed.startsWith("https://")
-                    && (this.quayEndpoint.startsWith("localhost")
-                            || this.quayEndpoint.startsWith("127.0.0.1"))) {
+                    && (this.quayEndpoint.startsWith("localhost") || this.quayEndpoint.startsWith("127.0.0.1"))) {
                 // Default local registries to HTTP
                 scheme = "http";
             }
@@ -133,7 +132,8 @@ public class QuayClient {
      */
     public static QuayClient getShared(String quayEndpoint, String apiToken) {
         String ep = (quayEndpoint == null || quayEndpoint.trim().isEmpty()) ? DEFAULT_QUAY_ENDPOINT : quayEndpoint;
-        String tokenKey = (apiToken == null || apiToken.isEmpty()) ? "public" : Integer.toHexString(apiToken.hashCode());
+        String tokenKey =
+                (apiToken == null || apiToken.isEmpty()) ? "public" : Integer.toHexString(apiToken.hashCode());
         String key = ep + "|" + tokenKey;
         return CLIENT_CACHE.computeIfAbsent(key, k -> new QuayClient(quayEndpoint, apiToken));
     }

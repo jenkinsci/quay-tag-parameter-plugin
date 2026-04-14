@@ -187,9 +187,7 @@ public class QuayRepositoryParameterDefinition extends ParameterDefinition {
             return new HttpResponse() {
                 @Override
                 public void generateResponse(
-                        org.kohsuke.stapler.StaplerRequest2 req,
-                        org.kohsuke.stapler.StaplerResponse2 rsp,
-                        Object node)
+                        org.kohsuke.stapler.StaplerRequest2 req, org.kohsuke.stapler.StaplerResponse2 rsp, Object node)
                         throws java.io.IOException {
                     rsp.setContentType("application/json;charset=UTF-8");
                     rsp.getWriter().write(body.toString());

@@ -309,8 +309,8 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
 
                 int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
                 QuayClient client = QuayClient.getShared(quayEndpoint, token);
-                List<QuayTag> tags = new java.util.ArrayList<>(
-                        client.getTags(organization.trim(), repository.trim(), limit));
+                List<QuayTag> tags =
+                        new java.util.ArrayList<>(client.getTags(organization.trim(), repository.trim(), limit));
                 tags.sort(java.util.Comparator.comparing(QuayTag::getName, String.CASE_INSENSITIVE_ORDER));
                 for (QuayTag t : tags) {
                     tagsArray.add(t.getName());
@@ -329,9 +329,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
             return new HttpResponse() {
                 @Override
                 public void generateResponse(
-                        org.kohsuke.stapler.StaplerRequest2 req,
-                        org.kohsuke.stapler.StaplerResponse2 rsp,
-                        Object node)
+                        org.kohsuke.stapler.StaplerRequest2 req, org.kohsuke.stapler.StaplerResponse2 rsp, Object node)
                         throws java.io.IOException {
                     rsp.setContentType("application/json;charset=UTF-8");
                     rsp.getWriter().write(body.toString());

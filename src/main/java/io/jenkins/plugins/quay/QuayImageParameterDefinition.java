@@ -17,12 +17,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
@@ -113,23 +116,34 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
             tag = defaultTag != null ? defaultTag : "latest";
         }
 
-        return new QuayImageParameterValue(getName(), organization, repository, tag, getQuayEndpoint());
+        String repo = repository;
+        if (jo.has("repository") && !jo.getString("repository").trim().isEmpty()) {
+            repo = jo.getString("repository").trim();
+        }
+
+        return new QuayImageParameterValue(getName(), organization, repo, tag, getQuayEndpoint());
     }
 
     @Override
     public ParameterValue createValue(StaplerRequest2 req) {
         String[] tagValues = req.getParameterValues(getName());
         String[] valueParams = req.getParameterValues("value");
+        String[] repoParams = req.getParameterValues("repository");
+
+        String repo = repository;
+        if (repoParams != null && repoParams.length > 0 && !repoParams[0].trim().isEmpty()) {
+            repo = repoParams[0].trim();
+        }
 
         if (tagValues != null && tagValues.length > 0) {
-            return new QuayImageParameterValue(getName(), organization, repository, tagValues[0], getQuayEndpoint());
+            return new QuayImageParameterValue(getName(), organization, repo, tagValues[0], getQuayEndpoint());
         }
         if (valueParams != null && valueParams.length > 0) {
-            return new QuayImageParameterValue(getName(), organization, repository, valueParams[0], getQuayEndpoint());
+            return new QuayImageParameterValue(getName(), organization, repo, valueParams[0], getQuayEndpoint());
         }
         // Return default value if no tag specified
         String tag = defaultTag != null ? defaultTag : "latest";
-        return new QuayImageParameterValue(getName(), organization, repository, tag, getQuayEndpoint());
+        return new QuayImageParameterValue(getName(), organization, repo, tag, getQuayEndpoint());
     }
 
     @Override
@@ -144,8 +158,10 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
     public List<QuayTag> getAvailableTags() {
         try {
             String token = resolveCredentials(credentialsId);
-            QuayClient client = new QuayClient(getQuayEndpoint(), token);
-            return client.getTags(organization, repository, tagLimit);
+            QuayClient client = QuayClient.getShared(getQuayEndpoint(), token);
+            List<QuayTag> tags = new java.util.ArrayList<>(client.getTags(organization, repository, tagLimit));
+            tags.sort(java.util.Comparator.comparing(QuayTag::getName, String.CASE_INSENSITIVE_ORDER));
+            return tags;
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to fetch tags for " + organization + "/" + repository, e);
             return Collections.emptyList();
@@ -236,7 +252,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                 }
 
                 int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
-                QuayClient client = new QuayClient(quayEndpoint, token);
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, limit);
 
                 if (tags.isEmpty()) {
@@ -252,6 +268,73 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
             }
 
             return model;
+        }
+
+        /**
+         * Build-time AJAX endpoint: returns tags as JSON so the build dialog
+         * can refresh its dropdown when the user types a different repository.
+         */
+        @POST
+        public HttpResponse doFetchTagsJson(
+                @QueryParameter String quayEndpoint,
+                @QueryParameter String organization,
+                @QueryParameter String repository,
+                @QueryParameter String credentialsId,
+                @QueryParameter int tagLimit) {
+            Jenkins.get().checkPermission(Jenkins.READ);
+
+            JSONObject result = new JSONObject();
+            JSONArray tagsArray = new JSONArray();
+
+            if (organization == null
+                    || organization.trim().isEmpty()
+                    || repository == null
+                    || repository.trim().isEmpty()) {
+                result.put("tags", tagsArray);
+                result.put("error", "Organization and repository are required");
+                return jsonResponse(result);
+            }
+
+            try {
+                String token = null;
+                if (credentialsId != null && !credentialsId.trim().isEmpty()) {
+                    StringCredentials credentials = CredentialsMatchers.firstOrNull(
+                            CredentialsProvider.lookupCredentialsInItemGroup(
+                                    StringCredentials.class, Jenkins.get(), ACL.SYSTEM2, Collections.emptyList()),
+                            CredentialsMatchers.withId(credentialsId));
+                    if (credentials != null) {
+                        token = credentials.getSecret().getPlainText();
+                    }
+                }
+
+                int limit = tagLimit > 0 ? tagLimit : DEFAULT_TAG_LIMIT;
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
+                List<QuayTag> tags =
+                        new java.util.ArrayList<>(client.getTags(organization.trim(), repository.trim(), limit));
+                tags.sort(java.util.Comparator.comparing(QuayTag::getName, String.CASE_INSENSITIVE_ORDER));
+                for (QuayTag t : tags) {
+                    tagsArray.add(t.getName());
+                }
+                result.put("tags", tagsArray);
+                result.put("error", JSONNull.getInstance());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error fetching tags for build dialog: " + e.getMessage());
+                result.put("tags", tagsArray);
+                result.put("error", e.getMessage());
+            }
+            return jsonResponse(result);
+        }
+
+        private static HttpResponse jsonResponse(final JSONObject body) {
+            return new HttpResponse() {
+                @Override
+                public void generateResponse(
+                        org.kohsuke.stapler.StaplerRequest2 req, org.kohsuke.stapler.StaplerResponse2 rsp, Object node)
+                        throws java.io.IOException {
+                    rsp.setContentType("application/json;charset=UTF-8");
+                    rsp.getWriter().write(body.toString());
+                }
+            };
         }
 
         /**
@@ -321,7 +404,7 @@ public class QuayImageParameterDefinition extends ParameterDefinition {
                     }
                 }
 
-                QuayClient client = new QuayClient(quayEndpoint, token);
+                QuayClient client = QuayClient.getShared(quayEndpoint, token);
                 List<QuayTag> tags = client.getTags(organization, repository, 5);
 
                 return FormValidation.ok("Success! Found " + tags.size() + " tags.");

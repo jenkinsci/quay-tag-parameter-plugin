@@ -1,21 +1,27 @@
 package io.jenkins.plugins.quay;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Tests for QuayImageStep Pipeline step.
  */
-public class QuayImageStepTest {
+@WithJenkins
+class QuayImageStepTest {
 
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void beforeEach(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Test
-    public void testStepCreation() {
+    void testStepCreation() {
         QuayImageStep step = new QuayImageStep("myorg", "myrepo");
 
         assertEquals("myorg", step.getOrganization());
@@ -28,7 +34,7 @@ public class QuayImageStepTest {
     }
 
     @Test
-    public void testStepWithAllOptions() {
+    void testStepWithAllOptions() {
         QuayImageStep step = new QuayImageStep("myorg", "myrepo");
         step.setQuayEndpoint("quay.mycompany.com");
         step.setCredentialsId("my-creds");
@@ -44,14 +50,14 @@ public class QuayImageStepTest {
     }
 
     @Test
-    public void testDescriptorFunctionName() {
+    void testDescriptorFunctionName() {
         QuayImageStep.DescriptorImpl descriptor = new QuayImageStep.DescriptorImpl();
         assertEquals("quayImage", descriptor.getFunctionName());
         assertEquals("Get Quay.io Image Reference", descriptor.getDisplayName());
     }
 
     @Test
-    public void testTagLimitValidation() {
+    void testTagLimitValidation() {
         QuayImageStep step = new QuayImageStep("org", "repo");
 
         // Invalid value should default to 20
